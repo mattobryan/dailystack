@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DailyStack — Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500;1,6..72,600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --serif: 'Anthropic Serif', 'Newsreader', Georgia, 'Times New Roman', serif; }
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; margin: 0; }
+  body { font-family: 'Outfit', sans-serif; background: #070815; }
+  #root { overflow-y: auto; }
+  :root { --ts: 0.9; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #5B54E855; border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: #0d0e1a; }
+  a:hover { filter: brightness(1.08); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="android-frame.jsx"></script>
+<script type="text/babel" src="showcase.jsx"></script>
+<script type="text/babel">
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<window.Showcase />);
+  // responsive tablet scale: fit the ~1224px tablet inside its card
+  function fitTablet() {
+    const card = document.querySelector('.tablet-scale');
+    if (!card) { requestAnimationFrame(fitTablet); return; }
+    const avail = card.parentElement.clientWidth;
+    const scale = Math.min(1, avail / 1224);
+    document.documentElement.style.setProperty('--ts', scale.toFixed(3));
+    // collapse the empty space scaling leaves behind
+    card.style.height = (844 * scale) + 'px';
+  }
+  window.addEventListener('resize', fitTablet);
+  setTimeout(fitTablet, 200);
+</script>
+</body>
+</html>
