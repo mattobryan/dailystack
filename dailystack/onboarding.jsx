@@ -97,3 +97,103 @@ function Onboarding({ t, onComplete, onSkip }) {
 }
 
 window.Onboarding = Onboarding;
+
+// ============================================================
+// Walkthrough — 4-slide tour, skippable, re-accessible via Help
+// ============================================================
+const { useState: useStateW } = React;
+
+const SLIDES = [
+  {
+    emoji: '🎯',
+    title: 'Build goals with the SMART wizard',
+    body: 'Every goal walks through five dimensions: Specific, Measurable, Achievable, Realistic, and Time-bound. Set a duration and add the daily habits that power your goal. You can edit any goal later — tap the pencil icon on a goal card to reopen the wizard pre-filled.',
+    tip: 'Tip: use the × next to each habit chip to unlink it from a goal without deleting the habit itself.',
+  },
+  {
+    emoji: '📅',
+    title: 'Friday-only habits',
+    body: 'Some habits like Sabbath Prep and Weekly Review are marked as weekly rather than daily. They only appear on Fridays in your grid — other days they\'re dimmed so they never count against your streak.',
+    tip: 'Tip: when creating a custom habit in the Goals wizard, toggle "Every day" off to make it a weekly (Friday-only) habit.',
+  },
+  {
+    emoji: '💬',
+    title: 'Reflect on what you missed',
+    body: 'At the end of the day, DailyStack notices habits you didn\'t complete and prompts a quick reflection: choose a reason (Too busy, Forgot, Unwell, Not relevant) or write a note. These reflections power the Monthly Retrospective in your Analysis tab.',
+    tip: 'Tip: when a goal\'s duration elapses, you\'ll be prompted for a fuller retrospective — rating, which SMART dimension fell short, and a narrative.',
+  },
+  {
+    emoji: '📊',
+    title: 'Read your Analysis tab',
+    body: 'The Analysis tab shows a 30-day completion average, per-habit bars with streak flames, a week-by-week breakdown, and a trend line. Scroll down for the Monthly Retrospective (top missed habits + recommendations) and the SMART Failure chart (which dimensions trip up your goals most).',
+    tip: 'Tip: the SMART Failure chart fills in as you complete retrospectives — the more goals you close out, the more useful it becomes.',
+  },
+];
+
+function Walkthrough({ t, onClose }) {
+  const [slide, setSlide] = useStateW(0);
+  const s = SLIDES[slide];
+  const isLast = slide === SLIDES.length - 1;
+  const accent = t.accent;
+
+  const overlay = { position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 };
+  const modal = { background: t.surface, border: `1px solid ${t.border}`, borderRadius: 22, padding: 'clamp(24px,5vw,40px)',
+    maxWidth: 520, width: '100%', boxShadow: '0 32px 80px -16px rgba(0,0,0,0.4)', fontFamily: 'Outfit, sans-serif',
+    display: 'flex', flexDirection: 'column', gap: 20, position: 'relative' };
+
+  return (
+    <div style={overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        {/* close */}
+        <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30,
+          borderRadius: 8, border: `1px solid ${t.border}`, background: 'transparent', color: t.textMuted,
+          cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+
+        {/* slide indicator */}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {SLIDES.map((_, i) => (
+            <div key={i} onClick={() => setSlide(i)} style={{ height: 4, flex: 1, borderRadius: 2, cursor: 'pointer',
+              background: i === slide ? accent : t.surface2, transition: 'background .2s' }} />
+          ))}
+        </div>
+
+        {/* icon */}
+        <div style={{ width: 64, height: 64, borderRadius: 18, background: `${accent}18`, border: `1px solid ${accent}30`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>{s.emoji}</div>
+
+        {/* content */}
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: accent, fontWeight: 700, marginBottom: 8 }}>
+            {slide + 1} of {SLIDES.length}
+          </div>
+          <h2 style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(22px,4vw,28px)',
+            margin: '0 0 12px', lineHeight: 1.1, color: t.text }}>{s.title}</h2>
+          <p style={{ fontSize: 14, color: t.textMuted, lineHeight: 1.6, margin: 0 }}>{s.body}</p>
+        </div>
+
+        {/* tip */}
+        <div style={{ background: t.surface2, borderRadius: 12, padding: '12px 14px', fontSize: 12.5, color: t.textMuted, lineHeight: 1.5 }}>
+          {s.tip}
+        </div>
+
+        {/* nav */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          {slide > 0 && (
+            <button onClick={() => setSlide(slide - 1)} style={{ flex: 1, padding: '11px 0', borderRadius: 12,
+              border: `1px solid ${t.border}`, background: 'transparent', color: t.textMuted, fontSize: 14,
+              fontWeight: 600, cursor: 'pointer', fontFamily: 'Outfit, sans-serif' }}>← Back</button>
+          )}
+          <button onClick={() => isLast ? onClose() : setSlide(slide + 1)}
+            style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: accent, color: '#fff',
+              fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Outfit, sans-serif',
+              boxShadow: `0 8px 22px -8px ${accent}` }}>
+            {isLast ? 'Got it — let\'s go!' : 'Next →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+window.Walkthrough = Walkthrough;

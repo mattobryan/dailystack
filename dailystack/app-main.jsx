@@ -49,7 +49,7 @@ function MobileTabBar({ t, tab, setTab, accent, bottomInset }) {
   );
 }
 
-function MobileHeader({ t, mode, toggleMode, onBell, dueCount, todayPct, doneToday, activeCount, tab, weekStart, today, goalsCount }) {
+function MobileHeader({ t, mode, toggleMode, onBell, dueCount, todayPct, doneToday, activeCount, tab, weekStart, today, goalsCount, onHelp }) {
   const R = 15, C = 2 * Math.PI * R;
   let title, sub;
   if (tab === 'grid') { title = 'This week'; sub = fmtLong(today); }
@@ -72,6 +72,7 @@ function MobileHeader({ t, mode, toggleMode, onBell, dueCount, todayPct, doneTod
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onBell} style={iconBtn} aria-label="Reminders">🔔{dueCount > 0 && <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, padding: '0 3px', borderRadius: 8, background: '#D4156E', color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{dueCount}</span>}</button>
           <button onClick={toggleMode} style={iconBtn} aria-label="Toggle theme">{mode === 'dark' ? '☀️' : '🌙'}</button>
+          <button onClick={onHelp} style={iconBtn} aria-label="Help">?</button>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
@@ -133,6 +134,9 @@ function HabitTracker() {
   const [reminder, setReminder] = useState(null);       // {habit}
   const [snoozed, setSnoozed] = useState([]);
   const [onboardOpen, setOnboardOpen] = useState(() => forceOnboard || (!store.onboarded && Object.keys(store.data || {}).length === 0));
+  const [reflection, setReflection] = useState(null);   // {habit, date}
+  const [retrospective, setRetrospective] = useState(null); // goal object
+  const [showHelp, setShowHelp] = useState(false);
 
   const today = now;
   const mode = modeOv || store.mode;
@@ -185,6 +189,22 @@ function HabitTracker() {
     return () => { clearInterval(id); clearTimeout(f); };
   }, [store, reminder, checkPrompt, snoozed]);
 
+  // ---- reflection + retrospective polling ----
+  useEffect(() => {
+    if (reflection || retrospective || onboardOpen) return;
+    const n = new Date();
+    // check for due reflections (missed habits needing a reason)
+    if (window.dueReflections) {
+      const refs = window.dueReflections(store, n);
+      if (refs.length) { setReflection(refs[0]); return; }
+    }
+    // check for completed goals needing a retrospective
+    if (window.dueRetrospectives) {
+      const retros = window.dueRetrospectives(store);
+      if (retros.length) setRetrospective(retros[0]);
+    }
+  }, [store, reflection, retrospective, onboardOpen]);
+
   const addGoal = (g) => save({ ...store, goals: [g, ...store.goals] });
   // create a goal and (optionally) install brand-new habits it should track
   const addGoalWithHabits = (g, newHabits = []) => {
@@ -197,6 +217,23 @@ function HabitTracker() {
     });
   };
   const deleteGoal = (id) => save({ ...store, goals: store.goals.filter((x) => x.id !== id) });
+  const updateGoal = (g, newHabits = []) => {
+    const built = (newHabits || []).map((def) => window.makeCustomHabit(def));
+    const linkedNew = [...new Set([...(g.linkedHabits || []), ...built.map((h) => h.id)])];
+    save({
+      ...store,
+      customHabits: [...(store.customHabits || []), ...built],
+      goals: store.goals.map((x) => x.id === g.id ? { ...g, linkedHabits: linkedNew } : x),
+    });
+  };
+  const removeHabitFromGoal = (goalId, habitId) => {
+    save({
+      ...store,
+      goals: store.goals.map((g) => g.id === goalId
+        ? { ...g, linkedHabits: (g.linkedHabits || []).filter((id) => id !== habitId) }
+        : g),
+    });
+  };
   // finish first-run onboarding: install chosen presets as goals + habits
   const completeOnboarding = (selected) => {
     let custom = [...(store.customHabits || [])];
@@ -282,6 +319,11 @@ function HabitTracker() {
             border: `1px solid ${t.border}`, background: t.surface, cursor: 'pointer', fontSize: 17 }}>
             {mode === 'dark' ? '☀️' : '🌙'}
           </button>
+
+          {/* help / walkthrough */}
+          <button onClick={() => setShowHelp(true)} title="Help & walkthrough" style={{ width: 40, height: 40, borderRadius: 11,
+            border: `1px solid ${t.border}`, background: t.surface, cursor: 'pointer', fontSize: 15,
+            fontWeight: 700, color: t.textMuted, fontFamily: 'Outfit, sans-serif' }}>?</button>
         </div>
 
         {/* tabs */}
@@ -304,6 +346,7 @@ function HabitTracker() {
       {narrow && (
         <MobileHeader t={t} mode={mode} toggleMode={toggleMode} dueCount={dueCount}
           onBell={() => { const due = window.dueReminders(store, now); if (due.length) setReminder({ habit: due[0] }); }}
+          onHelp={() => setShowHelp(true)}
           todayPct={todayPct} doneToday={doneToday} activeCount={activeToday.length}
           tab={tab} weekStart={weekStart} today={today} goalsCount={store.goals.length} />
       )}
@@ -343,7 +386,7 @@ function HabitTracker() {
         )}
         {tab === 'analysis' && <window.AnalysisPanel t={t} store={store} today={today} narrow={narrow} />}
         {tab === 'trackers' && <window.TrackersPanel t={t} store={store} today={today} update={update} narrow={narrow} />}
-        {tab === 'goals' && <window.GoalsPanel t={t} store={store} addGoalWithHabits={addGoalWithHabits} deleteGoal={deleteGoal} />}
+        {tab === 'goals' && <window.GoalsPanel t={t} store={store} addGoalWithHabits={addGoalWithHabits} deleteGoal={deleteGoal} updateGoal={updateGoal} removeHabitFromGoal={removeHabitFromGoal} />}
       </main>
 
       {/* ---- mobile bottom nav ---- */}
@@ -384,6 +427,36 @@ function HabitTracker() {
             let next = { ...store, data: { ...store.data, [key]: { ...rec, ...patch } } };
             next = markResolved(next, key, reminder.habit.id); save(next); setReminder(null);
           }} />
+      )}
+
+      {/* ---- missed-habit reflection ---- */}
+      {reflection && window.ReflectionModal && (
+        <window.ReflectionModal t={t} habit={reflection.habit} date={reflection.date}
+          onDismiss={() => setReflection(null)}
+          onSave={(payload) => {
+            const key = payload.date; const rec = store.data[key] || {};
+            const refs = { ...(rec.reflections || {}), [payload.habitId]: { reason: payload.reason, text: payload.text, date: payload.date } };
+            save({ ...store, data: { ...store.data, [key]: { ...rec, reflections: refs } } });
+            setReflection(null);
+          }} />
+      )}
+
+      {/* ---- goal retrospective ---- */}
+      {retrospective && window.RetrospectiveModal && (
+        <window.RetrospectiveModal t={t} goal={retrospective} store={store}
+          onDismiss={() => setRetrospective(null)}
+          onSave={(payload) => {
+            save({
+              ...store,
+              goals: store.goals.map((g) => g.id === retrospective.id ? { ...g, retrospective: payload } : g),
+            });
+            setRetrospective(null);
+          }} />
+      )}
+
+      {/* ---- walkthrough / help ---- */}
+      {showHelp && window.Walkthrough && (
+        <window.Walkthrough t={t} onClose={() => setShowHelp(false)} />
       )}
     </div>
   );
