@@ -177,53 +177,7 @@ function persist(store) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
 }
 
-// ---- Seed demo data so the prototype looks alive on first load ----
-function seedIfEmpty(store) {
-  if (Object.keys(store.data).length > 0) return store;
-  const today = new Date();
-  const rng = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
-  // demo already-onboarded user, with one custom habit added via a goal
-  store.onboarded = true;
-  store.customHabits = [
-    { id: 'c_read_demo', label: 'Read 25 min', emoji: '📖', category: 'mind', everyDay: true, custom: true },
-  ];
-  const allH = [...HABITS, ...store.customHabits];
-  for (let back = 0; back < 38; back++) {
-    const d = new Date(today); d.setDate(today.getDate() - back);
-    const key = iso(d); const rec = {};
-    allH.forEach((h, hi) => {
-      if (!isHabitActiveOn(h, d)) return;
-      const p = 0.78 - back * 0.006 - (h.id === 'applications' ? 0.25 : 0);
-      if (rng(back * 13.7 + hi * 3.1) < p) rec[h.id] = true;
-    });
-    rec.mood = 1 + Math.floor(rng(back * 7.3) * 5);
-    rec.water = 4 + Math.floor(rng(back * 2.1) * 5);
-    rec.sleep_hrs = +(5.5 + rng(back * 5.9) * 3).toFixed(1);
-    if (rec.water_l === undefined && rec.water) rec.water_l = +(rec.water * 0.25).toFixed(2);
-    if (rec.exercise) rec.exercise_km = +(2 + rng(back * 1.3) * 6).toFixed(1);
-    if (rec.deep_work) rec.deep_work_hrs = +(1 + rng(back * 4.2) * 4).toFixed(1);
-    if (back % 6 === 0) rec.gratitude = 'Grateful for steady progress and good rest.';
-    store.data[key] = rec;
-  }
-  store.goals = [
-    { id: '1001', title: 'Read “Atomic Habits”', description: 'Finish all 20 chapters; 1 chapter every 2 days.',
-      smart: { specific: 'Read Atomic Habits cover to cover', measurable: '20 chapters', achievable: '1 chapter / 2 days',
-               realistic: 'Already own the book; 25 min/night', timebound: '30 days' },
-      duration: 30, startDate: iso(new Date(today.getTime() - 12 * 86400000)),
-      linkedHabits: ['no_phone', 'c_read_demo'], colorIdx: 0, standalone: false },
-    { id: '1002', title: 'Run a 10K', description: 'Build from 3K to 10K continuous.',
-      smart: { specific: 'Complete a continuous 10K run', measurable: '10 kilometres', achievable: 'Add 1K every week',
-               realistic: 'Currently run 4K comfortably', timebound: '60 days' },
-      duration: 60, startDate: iso(new Date(today.getTime() - 26 * 86400000)),
-      linkedHabits: ['exercise', 'sleep'], colorIdx: 3, standalone: false },
-    { id: '1003', title: 'Ship portfolio site', description: '',
-      smart: { specific: 'Design + deploy personal portfolio', measurable: '5 case studies live', achievable: 'Evenings + weekends',
-               realistic: 'Have content drafted', timebound: '14 days' },
-      duration: 14, startDate: iso(new Date(today.getTime() - 5 * 86400000)),
-      linkedHabits: [], colorIdx: 1, standalone: true },
-  ];
-  return store;
-}
+function seedIfEmpty(store) { return store; }
 
 Object.assign(window, {
   THEME, WEEK_PALETTE, HABITS, CAT_LABEL, DOW_ABBR, MONTHS,
