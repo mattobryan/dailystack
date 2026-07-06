@@ -403,7 +403,7 @@ function HabitTracker() {
           onCancel={() => setCheckPrompt(null)}
           onConfirm={(patch) => {
             const key = checkPrompt.dateKey; const rec = store.data[key] || {};
-            const clean = { ...patch, __missed: (rec.__missed || []).filter((x) => x !== checkPrompt.habit.id) };
+            const clean = { [checkPrompt.habit.id]: true, ...patch, __missed: (rec.__missed || []).filter((x) => x !== checkPrompt.habit.id) };
             update(key, clean); setCheckPrompt(null);
           }} />
       )}

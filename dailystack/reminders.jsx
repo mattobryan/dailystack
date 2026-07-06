@@ -24,6 +24,8 @@ function dueReflections(store, now) {
   const check = (d) => {
     const key = window.iso(d);
     const rec = store.data[key] || {};
+    // only prompt for days where the user actually opened the app
+    if (!Object.keys(rec).length) return;
     const done = rec.reflections || {};
     HABITS.forEach((h) => {
       if (!window.isHabitActiveOn(h, d)) return;
