@@ -165,7 +165,7 @@ function monthWeeks(year, month) {
 }
 
 // ---- Persistence (single localStorage key, per spec) ----
-const STORE_KEY = 'ht_v4';
+const STORE_KEY = 'ht_v5';
 function loadStore() {
   try {
     const raw = localStorage.getItem(STORE_KEY);

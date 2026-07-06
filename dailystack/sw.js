@@ -1,4 +1,4 @@
-const CACHE = 'dailystack-v2';
+const CACHE = 'dailystack-v3';
 
 const LOCAL = [
   './app.html',
